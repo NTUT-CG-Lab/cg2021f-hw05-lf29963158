@@ -26,7 +26,7 @@
     <script>
         // 建構子 ScoreOutputer 接受一個字串，該字串為 csv 的檔案名稱
         // 以下面範例，檔名就為 "109598105(總分: 6).csv"
-        var so = new ScoreOutputer("109598105");
+        var so = new ScoreOutputer("110598047");
         so.installCSS(function () {
             // 安裝 bootstrap 的 css，如果在 html 上方引用 bootstrap 5.1.1 的話就不用使用 installCSS ，注意一定要 bootstrap css 5.1.1 版
             // installCSS 接收一個 callback 當作參數，作為成功安裝 bootstrap css 的回呼函式
@@ -39,7 +39,7 @@
             //addChild 要比 renderModal 先呼叫
             so.addChild("產生 42 個參數的 gui", 4, true);
             so.addChild("按 A 鍵切換為上一隻、按 D 鍵為下一隻 ( gui 跟角色要同時切換 )", 4, true);
-            so.addChild("讀取作業 3 與 作業 4 儲存的 label 表將可控制的 Morph 生成在右邊的 gui", 2, false);
+            so.addChild("讀取作業 3 與 作業 4 儲存的 label 表將可控制的 Morph 生成在右邊的 gui", 2, true);
 
             //產生自評表，參數如下所示
             so.renderModal(
@@ -96,6 +96,7 @@
             eye_raised_lower_eyelid_right: 0, eye_surprised_left: 0, eye_surprised_right: 0, iris_small_left: 0, iris_small_right: 0, mouth_aaa: 0, mouth_iii: 0, mouth_uuu: 0, mouth_eee: 0, mouth_ooo: 0
             , mouth_delta: 0, mouth_smirk: 0, mouth_raised_corner_left: 0, mouth_raised_corner_right: 0, mouth_lowered_corner_left: 0, mouth_lowered_corner_right: 0, iris_rotation_x: 0, iris_rotation_y: 0, head_x: 0, head_y: 0, head_z: 0
         };
+        //const maxX = 17, minX = -15;
         Ammo().then(function (AmmoLib) {
 
             Ammo = AmmoLib;
@@ -243,7 +244,17 @@
                 //此程式只有eye_happy_wink_left能控制
                 // let i = 0;
                 for (const key in standardlist) {
-                    if (standardlist[key] == -1) {
+                    if(key == 'iris_rotation_x'){
+                        morphs.add(controls, key, -1.0, 1.0, 0.01).onChange(onChangeMorph);
+                    }else if(key == 'iris_rotation_y'){
+                        morphs.add(controls, key, -1.0, 1.0, 0.01).onChange(onChangeMorph);
+                    }else if(key == 'head_x'){
+                        morphs.add(controls, key, -1.0, 1.0, 0.01).onChange(onChangeMorph);
+                    }else if(key == 'head_y'){
+                        morphs.add(controls, key, -1.0, 1.0, 0.01).onChange(onChangeMorph);
+                    }else if(key == 'head_z'){
+                        morphs.add(controls, key, -1.0, 1.0, 0.01).onChange(onChangeMorph);
+                    }else if (standardlist[key] == -1) {
                         morphs.add(controls, key,-1.0, -1.0, 0.01);
                     }
                     else {
@@ -265,7 +276,19 @@
                     const key = keys[ i ];
                     let index = data_json.modellist[modelFile_num][key];
                     const value = controls[ key ];
-                    mesh.morphTargetInfluences[ index ] = value;
+                    if(key == 'iris_rotation_x'){
+                        eyeRotation(value, 'x', data_json.modellist[0].RXPA, data_json.modellist[0].RXNA);
+                    }else if(key == 'iris_rotation_y'){
+                        eyeRotation(value, 'y', data_json.modellist[0].RYPA, data_json.modellist[0].LYNA);
+                    }else if(key == 'head_x'){
+                        headRotation(value, 'x');
+                    }else if(key == 'head_y'){
+                        headRotation(value, 'y');
+                    }else if(key == 'head_z'){
+                        headRotation(value, 'z');
+                    }else{
+                        mesh.morphTargetInfluences[ index ] = value;
+                    }
                     //console.log(key, value);
 
                 }
@@ -351,6 +374,9 @@
 					else modelFile_num += 1;
                     changemodel();
                     break;
+                case 'z':
+                    console.log(mesh.skeleton.bones);
+                    break;
             }
         }
         body.addEventListener('keydown', keyboard, false);
@@ -366,6 +392,39 @@
         function render() {
             if(loadstatus == 1){
                 effect.render(scene, camera);
+            }
+        }
+
+        function eyeRotation(value, rotationIndex, maxX, minX){
+            let nor = 0;
+            if(value >= 0){
+                nor = value * maxX;
+            }else{
+                nor = -value * minX;
+            }
+            switch(rotationIndex){
+                case 'x':
+                    mesh.skeleton.bones[leye_index].rotation.x = -nor * Math.PI / 180;
+                    mesh.skeleton.bones[reye_index].rotation.x = -nor * Math.PI / 180;
+                    break;
+                case 'y':
+                    mesh.skeleton.bones[leye_index].rotation.y = nor * Math.PI / 180;
+                    mesh.skeleton.bones[reye_index].rotation.y = nor * Math.PI / 180;
+                    break;
+            }
+        }
+
+        function headRotation(value, rotationIndex){
+            switch(rotationIndex){
+                case 'x':
+                    mesh.skeleton.bones[head_index].rotation.x = value * 15 * Math.PI / 180;
+                    break;
+                case 'y':
+                    mesh.skeleton.bones[head_index].rotation.y = value * 15 * Math.PI / 180;
+                    break;
+                case 'z':
+                    mesh.skeleton.bones[head_index].rotation.z = value * 15 * Math.PI / 180;
+                    break;
             }
         }
 
